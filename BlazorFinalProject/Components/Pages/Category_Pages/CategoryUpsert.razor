@@ -1,0 +1,105 @@
+﻿@page "/category/create"
+@page "/category/update/{id:int}"
+
+@inject ICategoryRepository _categoryRepository
+@inject NavigationManager _navigationManager
+
+@if (isLoading)
+{
+    <div class="position-absolute w-75 h-75 d-flex flex-column align-items-center bg-white justify-content-center">
+        <img src="/images/loading.gif" alt="Loading" />
+    </div>
+}
+else
+{
+    <div class="card shadow border-0 mt-4">
+        <div class="card-header bg-black bg-gradient m-lg-0 py-3">
+            <div class="row">
+                <div class="col-12 text-center">
+                    <h2 class="text-white py-2">@(Id >0 ? "Update": "Create") Category</h2>
+                </div>
+            </div>
+        </div>
+        <div class="card-body p-4">
+            <EditForm Model="category" FormName="CategoryUpsertForm" OnValidSubmit="UpsertCategory">
+                <DataAnnotationsValidator/>
+                <div class="border p-3 mt-4">
+                    <div class="form-floating py-3 col-12">
+                        <InputText @bind-Value="category.Name" class="form-control" id="Name" placeholder="Name"></InputText>
+                            <label for="Name">Name</label>
+                            <ValidationMessage For="@(() => category.Name)"/>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-6 col-md-3">
+                            <button type="submit" class="btn btn-primary form-control" disabled="@isLoading">
+                                @(Id > 0 ? "Update" : "Create")
+                            </button>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <button @onclick="OnUpsertCategoryCancel" class="btn btn-secondary form-control" disabled="@isLoading">
+                                Back to Category List
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+}
+
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    [SupplyParameterFromForm]
+    private Category category { get; set; } = new Category();
+
+    public bool isLoading { get; set; } = true;
+
+    private string CategoryNameFallback { get; set; } = string.Empty;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await LoadCategory();
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadCategory()
+    {
+        if (Id > 0)
+        {
+            category = await _categoryRepository.GetAsync(Id);
+            CategoryNameFallback = category.Name;
+        }
+    }
+
+    private async Task UpsertCategory()
+    {
+        isLoading = true;
+        if(category.Id == 0)
+        {
+            // create
+            await _categoryRepository.CreateAsync(category);
+
+        }
+        else
+        {
+            // update
+            await _categoryRepository.UpdateAsync(category);
+        }
+        isLoading = false;
+        _navigationManager.NavigateTo("category");
+    }
+
+    private void OnUpsertCategoryCancel()
+    {
+        category.Name = CategoryNameFallback;
+        _navigationManager.NavigateTo("category", true);
+    }
+
+}
