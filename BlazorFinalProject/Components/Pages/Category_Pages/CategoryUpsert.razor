@@ -3,6 +3,7 @@
 
 @inject ICategoryRepository _categoryRepository
 @inject NavigationManager _navigationManager
+@inject IJSRuntime _JS
 
 @if (isLoading)
 {
@@ -85,12 +86,14 @@ else
         {
             // create
             await _categoryRepository.CreateAsync(category);
+            await _JS.ToastrSuccess("Category created successfully!");
 
         }
         else
         {
             // update
             await _categoryRepository.UpdateAsync(category);
+            await _JS.ToastrSuccess("Category updated successfully!");
         }
         isLoading = false;
         _navigationManager.NavigateTo("category");
